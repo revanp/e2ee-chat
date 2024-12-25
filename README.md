@@ -1,40 +1,61 @@
-# Welcome to Remix!
+# E2EE Chat
 
-- 📖 [Remix docs](https://remix.run/docs)
+E2EE Chat is an end-to-end encrypted chat application built with Remix, WebSockets, and libsodium for encryption. This project demonstrates how to create a secure chat application where messages are encrypted on the client side and decrypted on the client side, ensuring that the server cannot read the messages.
 
-## Development
+## Features
 
-Run the dev server:
+- End-to-end encryption using libsodium
+- Real-time messaging with WebSockets
+- Modern UI with DaisyUI
 
-```shellscript
-npm run dev
-```
+## Getting Started
 
-## Deployment
+### Prerequisites
 
-First, build your app for production:
+- Node.js (v14 or higher)
+- pnpm
 
-```sh
-npm run build
-```
+### Installation
 
-Then run the app in production mode:
+1. Clone the repository:
 
-```sh
-npm start
-```
+   ```sh
+   git clone https://github.com/yourusername/e2e-chat.git
+   cd e2e-chat
+   ```
 
-Now you'll need to pick a host to deploy it to.
+2. Install dependencies:
 
-### DIY
+   ```sh
+   pnpm install
+   ```
 
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
+### Running the Application
 
-Make sure to deploy the output of `npm run build`
+1. Start the WebSocket server:
 
-- `build/server`
-- `build/client`
+   ```sh
+   node server/ws.js
+   ```
 
-## Styling
+2. Start the Remix development server:
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+   ```sh
+   pnpm run dev
+   ```
+
+3. Open your browser and navigate to `http://localhost:5173`.
+
+### Project Structure
+
+- `app/routes/_index.tsx`: The main chat interface.
+- `app/utils/crypto.ts`: Utility functions for encryption and decryption using libsodium.
+- `app/utils/websocket.ts`: Utility function to connect to the WebSocket server.
+- `server/ws.js`: WebSocket server implementation.
+
+### How It Works
+
+1. When the client connects to the WebSocket server, it generates a key pair using `libsodium`.
+2. Messages are encrypted on the client side using a shared key and sent to the server.
+3. The server broadcasts the encrypted messages to all connected clients.
+4. Clients decrypt the received messages using the shared key.
