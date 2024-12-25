@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import { generateKeyPair } from "~/utils/crypto";
+import { decryptMessage, encryptMessage, generateKeyPair } from "~/utils/crypto";
+import { connectWebSocket } from "~/utils/websocket";
 
 export const meta: MetaFunction = () => {
   return [
@@ -16,28 +17,62 @@ export default function Index() {
   useEffect(() => {
     const setupSocket = async () => {
       const { publicKey, privateKey }  = await generateKeyPair();
+      const sharedKey = new Uint8Array(32); // Use a consistent key for encryption and decryption
 
-      console.log('Public', publicKey);
-      console.log('Private', privateKey);
+      const ws = connectWebSocket(async (data) => {
+        console.log(`Received: ${JSON.stringify(data)}`);
+        if (data.ciphertext) {
+          const { ciphertext, nonce } = data;
+          const decryptedMessage = await decryptMessage(
+            new Uint8Array(Object.values(ciphertext)),
+            new Uint8Array(Object.values(nonce)),
+            sharedKey
+          );
+
+          setMessage((prev) => [...prev, decryptedMessage]);
+        }
+      });
+
+      setSocket(ws);
     }
 
     setupSocket();
   }, []);
 
+  const sendMessage = async () => {
+    if(!socket) {
+      return;
+    }
+
+    const sharedKey = new Uint8Array(32);
+    const { ciphertext, nonce } = await encryptMessage(input, sharedKey);
+
+    socket.send(JSON.stringify({ ciphertext, nonce }));
+    setInput('');
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100 text-gray-900">
-      <div>
-        
+    <div className="flex flex-col h-screen bg-base-200 text-base-content">
+      <div className="flex-grow p-4 overflow-y-auto">
+        <div className="space-y-4">
+          {messages.map((msg, index) => (
+            <div key={index} className="chat chat-start">
+              <div className="chat-bubble">{msg}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="p-4 bg-gray-200 flex gap-2">
+      <div className="p-4 bg-base-300 flex gap-2 items-center">
         <input
-          className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none"
+          className="input input-bordered w-full"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your message..."
         />
         <button
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          className="btn btn-primary"
+          onClick={sendMessage}
         >
           Send
         </button>
